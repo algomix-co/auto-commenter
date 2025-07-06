@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Contextual Reply</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 16px; }
+    textarea { width: 100%; height: 80px; margin-bottom: 8px; }
+    button { margin-right: 8px; }
+  </style>
+</head>
+<body>
+  <h3>Selected Text</h3>
+  <div id="context" style="border:1px solid #ddd; padding:8px; height:80px; overflow:auto;"></div>
+  <h3>Custom Instructions (Optional): <button id="clear-prompt" style="font-size: 10px; padding: 2px 6px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 3px; cursor: pointer;">Clear</button></h3>
+  <textarea id="custom-prompt" placeholder="e.g., 'Reply as a startup founder', 'Include technical details', 'Keep it under 50 words', etc." style="width: 100%; height: 60px; margin-bottom: 8px; font-size: 12px; resize: vertical;"></textarea>
+  
+  <h3>Reply (Tone):</h3>
+  <div>
+    <button id="friendly-btn">Friendly</button>
+    <button id="professional-btn">Professional</button>
+    <button id="casual-btn">Casual</button>
+  </div>
+  <h3>Generated Reply</h3>
+  <textarea id="reply"></textarea>
+  <button id="copy-btn" style="margin-top: 8px; padding: 6px 12px; background: #007cba; color: white; border: none; border-radius: 4px; cursor: pointer;">Copy to Clipboard</button>
+
+  <script src="sidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+{
+    "manifest_version": 3,
+    "name": "Contextual Reply Assistant",
+    "description": "Generate personalized replies to selected text on any website.",
+    "version": "1.0",
+    "permissions": [
+      "storage",
+      "scripting",
+      "activeTab",
+      "contextMenus",
+      "commands"
+    ],
+    "action": {
+      "default_popup": "settings.html"
+    },
+    "background": {
+      "service_worker": "background.js"
+    },
+    "content_scripts": [
+      {
+        "matches": ["<all_urls>"],
+        "js": ["content.js"],
+        "css": ["sidebar.css"],
+        "run_at": "document_idle"
+      }
+    ],
+    "host_permissions": ["<all_urls>"],
+    "web_accessible_resources": [
+      {
+        "resources": ["sidebar.html", "sidebar.css", "sidebar.js"],
+        "matches": ["<all_urls>"]
+      }
+    ],
+    "commands": {
+      "open-sidebar": {
+        "suggested_key": {
+          "default": "Ctrl+Shift+Y",
+          "mac": "Command+Shift+Y"
+        },
+        "description": "Open contextual reply sidebar"
+      }
+    }
+  }
+  
