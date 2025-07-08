@@ -4,26 +4,345 @@
   <meta charset="utf-8" />
   <title>Contextual Reply</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 16px; }
-    textarea { width: 100%; height: 80px; margin-bottom: 8px; }
-    button { margin-right: 8px; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: linear-gradient(135deg, #a8e6cf 0%, #88d8c0 100%);
+      min-height: 100vh;
+      padding: 12px;
+      color: #2d3748;
+    }
+    
+    .container {
+      max-width: 420px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #2d3748;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, #4a9eff, #00d4aa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .section {
+      margin-bottom: 20px;
+    }
+    
+    #context {
+      background: rgba(255, 255, 255, 0.8);
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px;
+      height: 100px;
+      overflow: auto;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #4a5568;
+      transition: all 0.3s ease;
+    }
+    
+    #context:hover {
+      border-color: #4a9eff;
+      background: rgba(255, 255, 255, 0.9);
+    }
+    
+    textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 13px;
+      resize: vertical;
+      transition: all 0.3s ease;
+      background: rgba(255, 255, 255, 0.9);
+      color: #2d3748;
+      font-family: inherit;
+      line-height: 1.5;
+    }
+    
+    textarea:focus {
+      outline: none;
+      border-color: #4a9eff;
+      box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.1);
+      transform: translateY(-1px);
+      background: white;
+    }
+    
+    textarea::placeholder {
+      color: #a0aec0;
+    }
+    
+    #custom-prompt {
+      height: 70px;
+      margin-bottom: 6px;
+    }
+    
+    #reply {
+      height: 100px;
+      margin-bottom: 12px;
+    }
+    
+    .tone-buttons {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    
+    .tone-button {
+      flex: 1 1 calc(33.333% - 4px);
+      min-width: 85px;
+      max-width: 120px;
+      padding: 10px 8px;
+      background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+      color: #4a5568;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.2px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      white-space: nowrap;
+      line-height: 1.2;
+    }
+    
+    @media (max-width: 380px) {
+      .tone-button {
+        flex: 1 1 100%;
+        margin-bottom: 6px;
+        max-width: none;
+      }
+      
+      .tone-buttons {
+        flex-direction: column;
+      }
+    }
+    
+    .tone-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(74, 158, 255, 0.15);
+      border-color: #4a9eff;
+    }
+    
+    .tone-button.active {
+      background: linear-gradient(135deg, #4a9eff 0%, #00d4aa 100%);
+      color: white;
+      border-color: #4a9eff;
+    }
+    
+    .tone-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+    
+    .tone-button:hover::before {
+      left: 100%;
+    }
+    
+    .clear-btn {
+      background: rgba(239, 68, 68, 0.1);
+      color: #dc2626;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      border-radius: 5px;
+      padding: 3px 6px;
+      font-size: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+    
+    .clear-btn:hover {
+      background: rgba(239, 68, 68, 0.2);
+      transform: translateY(-1px);
+    }
+    
+    .copy-btn {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #00d4aa 0%, #4a9eff 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .copy-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(0, 212, 170, 0.3);
+    }
+    
+    .copy-btn:active {
+      transform: translateY(0);
+    }
+    
+    .copy-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+    
+    .copy-btn:hover::before {
+      left: 100%;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .header h1 {
+      font-size: 20px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #4a9eff, #00d4aa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 6px;
+    }
+    
+    .header p {
+      color: #718096;
+      font-size: 12px;
+    }
+    
+    .glass-effect {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .glass-effect::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+      pointer-events: none;
+    }
+    
+    .loading {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+    
+    .loading::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #667eea;
+      border-top: 2px solid transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      transform: translate(-50%, -50%);
+    }
+    
+    @keyframes spin {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+    
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: rgba(226, 232, 240, 0.3);
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, #4a9eff, #00d4aa);
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(135deg, #3b82f6, #10b981);
+    }
   </style>
 </head>
 <body>
-  <h3>Selected Text</h3>
-  <div id="context" style="border:1px solid #ddd; padding:8px; height:80px; overflow:auto;"></div>
-  <h3>Custom Instructions (Optional): <button id="clear-prompt" style="font-size: 10px; padding: 2px 6px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 3px; cursor: pointer;">Clear</button></h3>
-  <textarea id="custom-prompt" placeholder="e.g., 'Reply as a startup founder', 'Include technical details', 'Keep it under 50 words', etc." style="width: 100%; height: 60px; margin-bottom: 8px; font-size: 12px; resize: vertical;"></textarea>
-  
-  <h3>Reply (Tone):</h3>
-  <div>
-    <button id="friendly-btn">Friendly</button>
-    <button id="professional-btn">Professional</button>
-    <button id="casual-btn">Casual</button>
+  <div class="container glass-effect">
+    <div class="header">
+      <h1>Reply Assistant</h1>
+      <p>Generate contextual responses with AI</p>
+    </div>
+    
+    <div class="section">
+      <h3>Selected Text</h3>
+      <div id="context"></div>
+    </div>
+    
+    <div class="section">
+      <h3>Custom Instructions (Optional) 
+        <button id="clear-prompt" class="clear-btn">Clear</button>
+      </h3>
+      <textarea id="custom-prompt" placeholder="e.g., 'Reply as a startup founder', 'Include technical details', 'Keep it under 50 words', etc."></textarea>
+    </div>
+    
+    <div class="section">
+      <h3>Reply Tone</h3>
+      <div class="tone-buttons">
+        <button id="friendly-btn" class="tone-button">Friendly</button>
+        <button id="professional-btn" class="tone-button">Professional</button>
+        <button id="casual-btn" class="tone-button">Casual</button>
+      </div>
+    </div>
+    
+    <div class="section">
+      <h3>Generated Reply</h3>
+      <textarea id="reply" placeholder="Your AI-generated reply will appear here..."></textarea>
+      <button id="copy-btn" class="copy-btn">Copy to Clipboard</button>
+    </div>
   </div>
-  <h3>Generated Reply</h3>
-  <textarea id="reply"></textarea>
-  <button id="copy-btn" style="margin-top: 8px; padding: 6px 12px; background: #007cba; color: white; border: none; border-radius: 4px; cursor: pointer;">Copy to Clipboard</button>
 
   <script src="sidebar.js"></script>
 </body>

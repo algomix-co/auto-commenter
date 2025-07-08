@@ -6,25 +6,40 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
   
-  chrome.storage.local.get(["llm_provider","llm_api_key"], data => {
+  chrome.storage.local.get(["llm_provider","llm_api_key","llm_model"], data => {
     if (chrome.runtime.lastError) {
       console.error("Error loading settings:", chrome.runtime.lastError);
     } else {
       if (data.llm_provider) {
         document.getElementById("provider").value = data.llm_provider;
+        toggleModelSection(data.llm_provider);
       }
       if (data.llm_api_key) {
         document.getElementById("apikey").value = data.llm_api_key;
       }
+      if (data.llm_model) {
+        document.getElementById("model").value = data.llm_model;
+      }
     }
+  });
+
+  // Show/hide model section based on provider
+  document.getElementById("provider").addEventListener("change", (e) => {
+    toggleModelSection(e.target.value);
   });
 
   document.getElementById("save").addEventListener("click", async () => {
     const provider = document.getElementById("provider").value;
     const apikey = document.getElementById("apikey").value.trim();
+    const model = document.getElementById("model").value.trim();
     
     if (!apikey) {
       alert("Please enter an API key");
+      return;
+    }
+
+    if (provider === "openrouter" && !model) {
+      alert("Please enter a model ID for OpenRouter");
       return;
     }
 
@@ -38,22 +53,24 @@ document.addEventListener("DOMContentLoaded", () => {
       
       if (isValid) {
         // Save if validation succeeds
-        chrome.storage.local.set(
-          { llm_provider: provider, llm_api_key: apikey },
-          () => {
-            alert("Settings saved successfully!");
-          }
-        );
+        const saveData = { llm_provider: provider, llm_api_key: apikey };
+        if (provider === "openrouter" && model) {
+          saveData.llm_model = model;
+        }
+        chrome.storage.local.set(saveData, () => {
+          alert("Settings saved successfully!");
+        });
       } else {
         // Ask user if they want to save anyway
         const saveAnyway = confirm("API key validation failed. Do you want to save it anyway?");
         if (saveAnyway) {
-          chrome.storage.local.set(
-            { llm_provider: provider, llm_api_key: apikey },
-            () => {
-              alert("Settings saved (validation failed)");
-            }
-          );
+          const saveData = { llm_provider: provider, llm_api_key: apikey };
+          if (provider === "openrouter" && model) {
+            saveData.llm_model = model;
+          }
+          chrome.storage.local.set(saveData, () => {
+            alert("Settings saved (validation failed)");
+          });
         }
       }
     } catch (error) {
@@ -61,12 +78,13 @@ document.addEventListener("DOMContentLoaded", () => {
       // Ask user if they want to save anyway when validation fails
       const saveAnyway = confirm("Could not validate API key due to an error. Do you want to save it anyway?");
       if (saveAnyway) {
-        chrome.storage.local.set(
-          { llm_provider: provider, llm_api_key: apikey },
-          () => {
-            alert("Settings saved (validation error)");
-          }
-        );
+        const saveData = { llm_provider: provider, llm_api_key: apikey };
+        if (provider === "openrouter" && model) {
+          saveData.llm_model = model;
+        }
+        chrome.storage.local.set(saveData, () => {
+          alert("Settings saved (validation error)");
+        });
       }
     } finally {
       saveButton.disabled = false;
@@ -108,4 +126,13 @@ async function validateApiKey(provider, apikey) {
   });
 
   return response.ok;
+}
+
+function toggleModelSection(provider) {
+  const modelSection = document.getElementById("model-section");
+  if (provider === "openrouter") {
+    modelSection.style.display = "block";
+  } else {
+    modelSection.style.display = "none";
+  }
 }

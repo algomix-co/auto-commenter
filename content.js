@@ -37,57 +37,113 @@ chrome.runtime.onMessage.addListener((message) => {
       position: fixed;
       top: 0;
       right: 0;
-      width: 400px;
+      width: 420px;
       height: 100%;
       z-index: ${sidebarZIndex};
       display: flex;
       flex-direction: column;
-      box-shadow: -2px 0 10px rgba(0,0,0,0.3);
-      background: white;
-      border-left: 1px solid #ddd;
+      box-shadow: -4px 0 20px rgba(0,0,0,0.1);
+      background: linear-gradient(135deg, #a8e6cf 0%, #88d8c0 100%);
+      border-left: 1px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      transition: transform 0.3s ease-in-out;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
     `;
 
     const header = document.createElement("div");
     header.style = `
-      background: #f0f0f0;
-      padding: 8px;
-      border-bottom: 1px solid #ddd;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      padding: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
       display: flex;
       justify-content: space-between;
       align-items: center;
       cursor: move;
+      position: relative;
+      z-index: 10;
+      border-radius: 0 0 16px 16px;
+      margin-bottom: 8px;
     `;
 
     const title = document.createElement("span");
     title.textContent = "Reply Assistant";
-    title.style = "font-weight: bold; font-size: 14px;";
+    title.style = `
+      font-weight: 700;
+      font-size: 16px;
+      background: linear-gradient(135deg, #4a9eff, #00d4aa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    `;
 
     const controls = document.createElement("div");
     controls.style = "display: flex; gap: 4px;";
 
     const toggleBtn = document.createElement("button");
     toggleBtn.innerHTML = "−";
+    toggleBtn.title = "Minimize";
     toggleBtn.style = `
-      background: none;
-      border: 1px solid #ccc;
-      width: 20px;
-      height: 20px;
+      background: linear-gradient(135deg, #4a9eff 0%, #00d4aa 100%);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      width: 24px;
+      height: 24px;
       cursor: pointer;
-      font-size: 16px;
+      font-size: 14px;
+      font-weight: bold;
       line-height: 1;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     `;
+    
+    // Add hover effect
+    toggleBtn.addEventListener("mouseenter", () => {
+      toggleBtn.style.transform = "scale(1.1)";
+      toggleBtn.style.boxShadow = "0 2px 8px rgba(74, 158, 255, 0.3)";
+    });
+    
+    toggleBtn.addEventListener("mouseleave", () => {
+      toggleBtn.style.transform = "scale(1)";
+      toggleBtn.style.boxShadow = "none";
+    });
 
     const closeBtn = document.createElement("button");
     closeBtn.innerHTML = "×";
+    closeBtn.title = "Close";
     closeBtn.style = `
-      background: none;
-      border: 1px solid #ccc;
-      width: 20px;
-      height: 20px;
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      width: 24px;
+      height: 24px;
       cursor: pointer;
       font-size: 16px;
+      font-weight: bold;
       line-height: 1;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     `;
+    
+    // Add hover effect
+    closeBtn.addEventListener("mouseenter", () => {
+      closeBtn.style.transform = "scale(1.1)";
+      closeBtn.style.boxShadow = "0 2px 8px rgba(239, 68, 68, 0.3)";
+    });
+    
+    closeBtn.addEventListener("mouseleave", () => {
+      closeBtn.style.transform = "scale(1)";
+      closeBtn.style.boxShadow = "none";
+    });
 
     const iframe = document.createElement("iframe");
     iframe.id = "reply-sidebar";
@@ -104,11 +160,22 @@ chrome.runtime.onMessage.addListener((message) => {
       position: absolute;
       left: 0;
       top: 0;
-      width: 4px;
+      width: 6px;
       height: 100%;
-      background: #ddd;
+      background: linear-gradient(135deg, #4a9eff, #00d4aa);
       cursor: ew-resize;
+      opacity: 0.7;
+      transition: opacity 0.2s ease;
     `;
+    
+    // Add hover effect to resize handle
+    resizeHandle.addEventListener("mouseenter", () => {
+      resizeHandle.style.opacity = "1";
+    });
+    
+    resizeHandle.addEventListener("mouseleave", () => {
+      resizeHandle.style.opacity = "0.7";
+    });
 
     header.appendChild(title);
     controls.appendChild(toggleBtn);
@@ -127,17 +194,23 @@ chrome.runtime.onMessage.addListener((message) => {
       console.error("Could not find a suitable element to append sidebar to");
     }
 
-    // Make draggable
+    // Make draggable (only when not collapsed)
     let isDragging = false;
     let startY = 0;
     let startTop = 0;
 
     header.addEventListener("mousedown", (e) => {
+      // Don't allow dragging when collapsed or when clicking on buttons
+      if (isCollapsed || e.target.closest('button')) {
+        return;
+      }
+      
       isDragging = true;
       startY = e.clientY;
       startTop = container.offsetTop;
       document.addEventListener("mousemove", onMouseMove);
       document.addEventListener("mouseup", onMouseUp);
+      e.preventDefault();
     });
 
     function onMouseMove(e) {
@@ -152,17 +225,23 @@ chrome.runtime.onMessage.addListener((message) => {
       document.removeEventListener("mouseup", onMouseUp);
     }
 
-    // Make resizable
+    // Make resizable (only when not collapsed)
     let isResizing = false;
     let startX = 0;
     let startWidth = 0;
 
     resizeHandle.addEventListener("mousedown", (e) => {
+      // Don't allow resizing when collapsed
+      if (isCollapsed) {
+        return;
+      }
+      
       isResizing = true;
       startX = e.clientX;
       startWidth = container.offsetWidth;
       document.addEventListener("mousemove", onResizeMove);
       document.addEventListener("mouseup", onResizeUp);
+      e.preventDefault();
     });
 
     function onResizeMove(e) {
@@ -177,23 +256,54 @@ chrome.runtime.onMessage.addListener((message) => {
       document.removeEventListener("mouseup", onResizeUp);
     }
 
-    // Toggle collapse
+    // Toggle collapse with sliding animation
     let isCollapsed = false;
-    let originalHeight = "100%";
-    toggleBtn.addEventListener("click", () => {
+    
+    function toggleSidebar() {
       if (isCollapsed) {
-        iframe.style.display = "block";
+        // Expand the sidebar
+        container.style.transform = "translateX(0)";
         toggleBtn.innerHTML = "−";
-        container.style.height = originalHeight;
-        container.style.minHeight = "200px";
+        toggleBtn.title = "Minimize";
+        isCollapsed = false;
       } else {
-        originalHeight = container.style.height || "100%";
-        iframe.style.display = "none";
+        // Collapse the sidebar by sliding it out
+        const containerWidth = container.offsetWidth;
+        container.style.transform = `translateX(${containerWidth - 40}px)`; // Leave 40px visible for the toggle button
         toggleBtn.innerHTML = "+";
-        container.style.height = "auto";
-        container.style.minHeight = "auto";
+        toggleBtn.title = "Expand";
+        isCollapsed = true;
       }
-      isCollapsed = !isCollapsed;
+    }
+    
+    toggleBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleSidebar();
+    });
+    
+    // Allow clicking on the collapsed sidebar area to expand it
+    container.addEventListener("click", (e) => {
+      if (isCollapsed && !e.target.closest('iframe') && !e.target.closest('button')) {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleSidebar();
+      }
+    });
+    
+    // Add visual feedback for collapsed state
+    container.addEventListener("mouseenter", () => {
+      if (isCollapsed) {
+        container.style.cursor = "pointer";
+        container.style.opacity = "0.9";
+      }
+    });
+    
+    container.addEventListener("mouseleave", () => {
+      if (isCollapsed) {
+        container.style.cursor = "default";
+        container.style.opacity = "1";
+      }
     });
 
     // Close button
@@ -207,5 +317,23 @@ chrome.runtime.onMessage.addListener((message) => {
         "*"
       );
     };
+    
+    // Prevent text selection during sidebar interactions
+    document.addEventListener("selectstart", (e) => {
+      if (e.target.closest('#reply-sidebar-container')) {
+        e.preventDefault();
+        return false;
+      }
+    });
+    
+    // Clear any existing selection when interacting with sidebar
+    container.addEventListener("mousedown", (e) => {
+      if (window.getSelection) {
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+          selection.removeAllRanges();
+        }
+      }
+    });
   }
   

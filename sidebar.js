@@ -1,9 +1,23 @@
 let selectedText = "";
 
+function setActiveTone(activeButtonId) {
+  document.querySelectorAll('.tone-button').forEach(btn => btn.classList.remove('active'));
+  document.getElementById(activeButtonId).classList.add('active');
+}
+
 document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("friendly-btn").addEventListener("click", () => generate('friendly'));
-  document.getElementById("professional-btn").addEventListener("click", () => generate('professional'));
-  document.getElementById("casual-btn").addEventListener("click", () => generate('casual'));
+  document.getElementById("friendly-btn").addEventListener("click", () => {
+    setActiveTone('friendly-btn');
+    generate('friendly');
+  });
+  document.getElementById("professional-btn").addEventListener("click", () => {
+    setActiveTone('professional-btn');
+    generate('professional');
+  });
+  document.getElementById("casual-btn").addEventListener("click", () => {
+    setActiveTone('casual-btn');
+    generate('casual');
+  });
   document.getElementById("copy-btn").addEventListener("click", copyToClipboard);
   
   // Clear custom prompt button
@@ -42,8 +56,8 @@ async function generate(tone) {
     return;
   }
 
-  const { llm_api_key: apiKey, llm_provider: provider } = 
-    await new Promise(resolve => chrome.storage.local.get(["llm_api_key","llm_provider"], resolve));
+  const { llm_api_key: apiKey, llm_provider: provider, llm_model: model } = 
+    await new Promise(resolve => chrome.storage.local.get(["llm_api_key","llm_provider","llm_model"], resolve));
 
   if (!apiKey) {
     document.getElementById("reply").value = "Please configure your API key in the extension settings";
@@ -51,6 +65,7 @@ async function generate(tone) {
   }
 
   document.getElementById("reply").value = "Generating response...";
+  document.getElementById("reply").classList.add("loading");
 
   try {
     // Get custom instructions if provided
@@ -79,7 +94,7 @@ async function generate(tone) {
     } else {
       url = "https://openrouter.ai/api/v1/chat/completions";
       headers.Authorization = `Bearer ${apiKey}`;
-      body = { model: "openai/gpt-3.5-turbo", messages: [{ role: "user", content: prompt }] };
+      body = { model: model || "openai/gpt-3.5-turbo", messages: [{ role: "user", content: prompt }] };
     }
 
     const resp = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
@@ -102,6 +117,8 @@ async function generate(tone) {
   } catch (error) {
     console.error("Generation error:", error);
     document.getElementById("reply").value = `Error: ${error.message}`;
+  } finally {
+    document.getElementById("reply").classList.remove("loading");
   }
 }
 
@@ -111,10 +128,10 @@ function copyToClipboard() {
   
   if (!replyTextarea.value || replyTextarea.value.trim() === "") {
     copyBtn.textContent = "No text to copy";
-    copyBtn.style.background = "#dc3545";
+    copyBtn.style.background = "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)";
     setTimeout(() => {
       copyBtn.textContent = "Copy to Clipboard";
-      copyBtn.style.background = "#007cba";
+      copyBtn.style.background = "linear-gradient(135deg, #10b981 0%, #059669 100%)";
     }, 2000);
     return;
   }
@@ -123,10 +140,10 @@ function copyToClipboard() {
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(replyTextarea.value).then(() => {
       copyBtn.textContent = "Copied!";
-      copyBtn.style.background = "#28a745";
+      copyBtn.style.background = "linear-gradient(135deg, #10b981 0%, #3b82f6 100%)";
       setTimeout(() => {
         copyBtn.textContent = "Copy to Clipboard";
-        copyBtn.style.background = "#007cba";
+        copyBtn.style.background = "linear-gradient(135deg, #00d4aa 0%, #4a9eff 100%)";
       }, 2000);
     }).catch(err => {
       console.error("Failed to copy:", err);
@@ -145,23 +162,23 @@ function copyToClipboard() {
       
       if (successful) {
         copyBtn.textContent = "Copied!";
-        copyBtn.style.background = "#28a745";
+        copyBtn.style.background = "linear-gradient(135deg, #10b981 0%, #3b82f6 100%)";
       } else {
         copyBtn.textContent = "Copy failed";
-        copyBtn.style.background = "#dc3545";
+        copyBtn.style.background = "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)";
       }
       
       setTimeout(() => {
         copyBtn.textContent = "Copy to Clipboard";
-        copyBtn.style.background = "#007cba";
+        copyBtn.style.background = "linear-gradient(135deg, #00d4aa 0%, #4a9eff 100%)";
       }, 2000);
     } catch (err) {
       console.error("Fallback copy failed:", err);
       copyBtn.textContent = "Copy failed";
-      copyBtn.style.background = "#dc3545";
+      copyBtn.style.background = "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)";
       setTimeout(() => {
         copyBtn.textContent = "Copy to Clipboard";
-        copyBtn.style.background = "#007cba";
+        copyBtn.style.background = "linear-gradient(135deg, #00d4aa 0%, #4a9eff 100%)";
       }, 2000);
     }
   }
